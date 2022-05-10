@@ -7,15 +7,27 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
+  mode: 'development',
+  devtool: 'source-map',
   entry: './src/javascript/main.js',
   output: {
     // path.resolve 絶対パス取得
     // __dirname 現在のディレクトリ
     path: path.resolve(__dirname, './dist'),
-    filename: './javascript/main.js', // defaultでmain.js
+    filename: './javascript/[name]-[hash].js', // defaultでmain.js
+    // [name]-[hash] cache対策
   },
   module: {
     rules: [
+      {
+        test: /\.(ts|tsx)/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: 'ts-loader',
+          },
+        ],
+      },
       //ES6のトランスパイル
       {
         test: /\.js/,
@@ -26,6 +38,7 @@ module.exports = {
             options: {
               presets: [
                 ['@babel/preset-env', { targets: '> 0.25%, not dead' }],
+                '@babel/preset-react', // react
               ],
             },
           },
@@ -44,13 +57,22 @@ module.exports = {
         ],
       },
       {
-        test: /\.(png|jpg)/,
+        test: /\.(png|jpg|jpeg)/,
         use: [
           {
             loader: 'file-loader',
             options: {
               esModule: false,
-              name: 'images/[name].[ext]',
+              name: 'images/[name]-[hash].[ext]',
+            },
+          },
+          {
+            loader: 'image-webpack-loader',
+            options: {
+              mozjpeg: {
+                progressive: true,
+                quality: 65,
+              },
             },
           },
         ],
@@ -73,7 +95,7 @@ module.exports = {
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: './stylesheet/main.css',
+      filename: './stylesheet/[name]-[hash].css',
     }),
     // index.htmlにコンテンツを追加する方法
     new HtmlWebpackPlugin({
